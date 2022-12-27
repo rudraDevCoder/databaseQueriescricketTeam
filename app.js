@@ -4,6 +4,17 @@ const sqlite3 = require("sqlite3");
 const path = require("path");
 const app = express();
 app.use(express.json());
+
+//snakeCase to camelCase
+const convertDbObjectToResponseObject = (dbObject) => {
+  return {
+    playerId: dbObject.player_id,
+    playerName: dbObject.player_name,
+    jerseyNumber: dbObject.jersey_number,
+    role: dbObject.role,
+  };
+};
+
 const dbPath = path.join(__dirname, "cricketTeam.db");
 
 let db = null;
@@ -28,7 +39,11 @@ app.get("/players/", async (request, response) => {
   const sqlQuery = `
      SELECT * FROM cricket_team ORDER BY player_id`;
   const playersTable = await db.all(sqlQuery);
-  response.send(playersTable);
+  response.send(
+    playersTable.map((eachPlayer) =>
+      convertDbObjectToResponseObject(eachPlayer)
+    )
+  );
 });
 //ADD PLAYER API
 app.post("/players/", async (request, response) => {
@@ -54,7 +69,7 @@ app.get("/players/:playerId/", async (request, response) => {
   const playerDetailsQuery = `
     SELECT *  FROM cricket_team WHERE player_id = ${playerId};`;
   const playerDetails = await db.get(playerDetailsQuery);
-  response.send(playerDetails);
+  response.send(convertDbObjectToResponseObject(playerDetails));
 });
 
 //update player details based on id
